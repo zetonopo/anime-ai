@@ -364,31 +364,31 @@
             messages: []
         };
 
-        // Connect handler
+        // Connect handler - Enable Text Chat (no microphone needed)
         window.handleConnect = async function() {
             const btn = document.getElementById('btn-connect');
             btn.disabled = true;
-            btn.textContent = '🔄 Đang kết nối...';
+            btn.textContent = '🔄 Đang kích hoạt...';
 
             try {
-                const success = await window.connectAI();
-                
-                if (success) {
-                    window.aiState.connected = true;
-                    updateStatus(true);
-                    document.getElementById('chat-input').disabled = false;
-                    document.getElementById('btn-disconnect').disabled = false;
-                    btn.textContent = '✅ Đã kết nối';
-                    
-                    addMessage('system', '🎉 Kết nối thành công! Bắt đầu nói chuyện với Alicia nhé!');
-                } else {
-                    throw new Error('Connection failed');
+                // Check if TTS Chat is initialized
+                if (!window.ttsChat) {
+                    throw new Error('TTS Chat chưa được khởi tạo. Hãy load VRM model trước!');
                 }
+                
+                // Enable chat immediately (no connection needed for text chat)
+                window.aiState.connected = true;
+                updateStatus(true);
+                document.getElementById('chat-input').disabled = false;
+                document.getElementById('btn-disconnect').disabled = false;
+                btn.textContent = '✅ Đang hoạt động';
+                
+                addMessage('system', '🎉 Text Chat đã sẵn sàng! Gõ tin nhắn và Alicia sẽ trả lời bằng giọng nói!');
             } catch (error) {
-                console.error('Connection error:', error);
+                console.error('Activation error:', error);
                 btn.disabled = false;
                 btn.textContent = '🎤 Bắt đầu Live';
-                alert('⚠️ Lỗi kết nối! Hãy kiểm tra:\n1. API Key đã được set trong main.js\n2. Mic permission\n3. Internet connection');
+                alert('⚠️ Lỗi kích hoạt! ' + error.message);
             }
         };
 
@@ -438,23 +438,33 @@
             window.aiState.messages.push({ type, text, timestamp: Date.now() });
         }
 
-        // Chat input handler
+        // Chat input handler - Simple animation + audio trigger (NO TTS)
         document.getElementById('chat-input').addEventListener('keypress', async (e) => {
             if (e.key === 'Enter' && e.target.value.trim()) {
                 const text = e.target.value.trim();
                 addMessage('user', text);
-                
-                // Send to AI
-                try {
-                    await window.sendTextToAI(text);
-                } catch (error) {
-                    console.error('Error sending to AI:', error);
-                    addMessage('system', '❌ Lỗi gửi tin nhắn. Check console.');
-                }
-                
                 e.target.value = '';
+                
+                // Check for animation keywords in user input and trigger animation + audio
+                if (window.animationTriggers) {
+                    console.log('🔍 Processing user message for triggers...');
+                    const triggered = await window.animationTriggers.processUserMessage(text);
+                    if (triggered) {
+                        console.log('✅ User message triggered animation + audio!');
+                    } else {
+                        console.log('ℹ️ No keyword detected in user message');
+                    }
+                } else {
+                    console.warn('⚠️ AnimationTriggers not initialized!');
+                }
             }
         });
+
+        // Callback for AI text responses
+        window.onAIResponse = function(text) {
+            console.log('🤖 AI Response received:', text);
+            addMessage('ai', text);
+        };
 
         // Override handleAudioOutput to show AI speaking
         const originalHandleAudioOutput = window.handleAudioOutput;
