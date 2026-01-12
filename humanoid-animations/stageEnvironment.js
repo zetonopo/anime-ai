@@ -654,6 +654,8 @@ export class StageEnvironment {
         const plane = new THREE.Mesh(planeGeometry, planeMaterial);
         plane.position.set(0, 5, -10); // Behind the stage
         plane.rotation.y = 0;
+        plane.frustumCulled = false; // Always render, don't cull
+        plane.renderOrder = -1; // Render before other objects
         
         this.scene.add(plane);
         this.videoPlane = plane;
