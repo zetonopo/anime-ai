@@ -188,7 +188,9 @@ export class StageEnvironment {
         // DJ Table/Desk (main surface)
         const tableGeometry = new THREE.BoxGeometry(2.3, 0.08, 1);
         const tableMaterial = new THREE.MeshStandardMaterial({
-            color: 0x1a0a3e,
+            color: 0x00f2ff,
+            emissive: 0x00f2ff,
+            emissiveIntensity: 1.5,
             metalness: 0.9,
             roughness: 0.15,
             envMapIntensity: 1.5
