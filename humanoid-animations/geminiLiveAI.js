@@ -217,7 +217,6 @@ Always respond in Vietnamese unless asked otherwise.`,
                 break;
             }
         }
-        }
     }
 
     /**

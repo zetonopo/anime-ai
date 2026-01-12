@@ -9,6 +9,8 @@ import { getRandomAnimationFile, animationLibrary } from './animationLibrary.js'
 import { StageEnvironment } from './stageEnvironment.js';
 import { DJPerformanceController } from './djPerformanceController.js';
 import { GeminiLiveAI } from './geminiLiveAI.js';
+import { AnimationTriggers } from '../animationTriggers.js';
+import { TextToSpeechChat } from '../textToSpeechChat.js';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
 
 // renderer
@@ -56,6 +58,8 @@ let currentAction = undefined;
 // AI Controllers
 let geminiLive = null;
 let lipSync = null;
+let ttsChat = null;
+let animationTriggers = null;
 let djPerformance = null;
 const GEMINI_API_KEY = 'AIzaSyDV4NrwTl-lGAfArmf-C_FWhCt0fzi5ZOg'; // TODO: Replace with your API key
 
@@ -172,10 +176,111 @@ function initializeAI() {
 	lipSync = new LipSyncController(currentVrm);
 	window.lipSync = lipSync;
 	
-	// GeminiLiveAI will be initialized on connect (lazy init)
+	// Initialize Animation Triggers with animation + audio handlers
+	animationTriggers = new AnimationTriggers(
+		handleAnimationCommand,
+		playAudioFile
+	);
+	window.animationTriggers = animationTriggers;
 	
-	console.log('✅ AI System initialized');
+	// Initialize Text-to-Speech Chat
+	ttsChat = new TextToSpeechChat(GEMINI_API_KEY);
+	
+	// Setup TTS chat callbacks
+	ttsChat.onAudioStart = () => {
+		console.log('🔊 AI is speaking...');
+		if (lipSync) {
+			lipSync.startTalking();
+		}
+	};
+	
+	ttsChat.onAudioEnd = () => {
+		console.log('🔇 AI finished speaking');
+		if (lipSync) {
+			lipSync.stopTalking();
+		}
+	};
+	
+	ttsChat.onTextResponse = (text) => {
+		console.log('💬 AI response:', text);
+		// Check for animation keywords in AI response
+		if (animationTriggers) {
+			animationTriggers.processAIResponse(text);
+		}
+		// Trigger callback for UI
+		if (typeof window.onAIResponse === 'function') {
+			window.onAIResponse(text);
+		}
+	};
+	
+	ttsChat.onError = (error) => {
+		console.error('❌ TTS Chat error:', error);
+	};
+	
+	// Expose to window
+	window.ttsChat = ttsChat;
+	
+	console.log('✅ AI System initialized (with TTS Chat + Animation Triggers)');
 }
+
+// Audio Player for pre-recorded voice clips
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let currentAudioSource = null;
+
+async function playAudioFile(filename) {
+	try {
+		console.log(`🔊 Playing audio: ${filename}`);
+		
+		// Stop current audio if playing
+		if (currentAudioSource) {
+			currentAudioSource.stop();
+			currentAudioSource = null;
+		}
+		
+		// Start lip-sync
+		if (lipSync) {
+			lipSync.startTalking();
+		}
+		
+		// Fetch and decode audio
+		const response = await fetch(`./audio/${filename}`);
+		const arrayBuffer = await response.arrayBuffer();
+		const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+		
+		// Get audio duration
+		const audioDuration = audioBuffer.duration;
+		console.log(`⏱️ Audio duration: ${audioDuration.toFixed(2)}s`);
+		
+		// Create and play source
+		currentAudioSource = audioContext.createBufferSource();
+		currentAudioSource.buffer = audioBuffer;
+		currentAudioSource.connect(audioContext.destination);
+		
+		// Stop lip-sync when audio ends
+		currentAudioSource.onended = () => {
+			console.log('🔇 Audio finished');
+			if (lipSync) {
+				lipSync.stopTalking();
+			}
+			currentAudioSource = null;
+		};
+		
+		currentAudioSource.start(0);
+		
+		// Return audio duration
+		return audioDuration;
+		
+	} catch (error) {
+		console.error('❌ Audio playback error:', error);
+		if (lipSync) {
+			lipSync.stopTalking();
+		}
+		return null;
+	}
+}
+
+// Expose audio player to window
+window.playAudioFile = playAudioFile;
 
 // Handle animation commands from AI
 async function handleAnimationCommand(action, duration, intensity = 1.0) {
