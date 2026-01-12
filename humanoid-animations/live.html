@@ -353,7 +353,23 @@
                     <option value="gradient">🎨 Aurora Gradient</option>
                     <option value="space">🌠 Deep Space</option>
                     <option value="stage">🎭 Classic Curtain</option>
+                    <option value="video">🎬 Video Background</option>
                 </select>
+            </div>
+
+            <div class="control-item" id="videoControls" style="display: none;">
+                <label>📹 Video File</label>
+                <input type="file" id="videoFileInput" accept="video/*" style="
+                    width: 100%;
+                    padding: 8px;
+                    border: 1px solid rgba(255,255,255,0.2);
+                    border-radius: 8px;
+                    background: rgba(0,0,0,0.3);
+                    color: white;
+                    font-size: 12px;
+                    cursor: pointer;
+                ">
+                <p style="font-size: 11px; margin-top: 5px; opacity: 0.6;">Hỗ trợ: MP4, WebM (khuyến nghị 1080p)</p>
             </div>
 
             <div class="control-item">
@@ -565,8 +581,33 @@
             // Background selector
             document.getElementById('backgroundSelect').addEventListener('change', (e) => {
                 stageConfig.background = e.target.value;
+                
+                // Show/hide video controls
+                const videoControls = document.getElementById('videoControls');
+                if (e.target.value === 'video') {
+                    videoControls.style.display = 'block';
+                } else {
+                    videoControls.style.display = 'none';
+                }
+                
                 rebuildStage();
                 console.log('🎨 Background changed:', e.target.value);
+            });
+
+            // Video file input
+            document.getElementById('videoFileInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const videoURL = URL.createObjectURL(file);
+                    stageConfig.videoSrc = videoURL;
+                    
+                    // Rebuild stage with new video
+                    if (stageConfig.background === 'video') {
+                        rebuildStage();
+                    }
+                    
+                    console.log('🎬 Video loaded:', file.name);
+                }
             });
 
             // Toggle platform

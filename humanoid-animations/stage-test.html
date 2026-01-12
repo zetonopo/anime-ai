@@ -450,7 +450,24 @@
 					<option value="gradient">🎨 Aurora Gradient</option>
 					<option value="space">🌠 Deep Space</option>
 					<option value="stage">🎭 Classic Curtain</option>
+					<option value="video">🎬 Video Background</option>
 				</select>
+			</div>
+
+			<div class="control-group" id="videoControls" style="display: none;">
+				<label>📹 Video Source</label>
+				<input type="file" id="videoFileInput" accept="video/*" style="
+					width: 100%;
+					padding: 10px;
+					border: 1px solid var(--border-color);
+					border-radius: 8px;
+					background: rgba(255, 255, 255, 0.05);
+					color: white;
+					font-size: 12px;
+					cursor: pointer;
+					font-family: inherit;
+				">
+				<p style="font-size: 11px; margin-top: 8px; opacity: 0.6; line-height: 1.4;">MP4, WebM supported. Best: 1080p 16:9</p>
 			</div>
 
 			<hr>
@@ -583,7 +600,32 @@
 			// Background selector
 			document.getElementById('backgroundSelect').addEventListener('change', (e) => {
 				stageConfig.background = e.target.value;
+				
+				// Show/hide video controls
+				const videoControls = document.getElementById('videoControls');
+				if (e.target.value === 'video') {
+					videoControls.style.display = 'block';
+				} else {
+					videoControls.style.display = 'none';
+				}
+				
 				rebuildStage();
+			});
+
+			// Video file input
+			document.getElementById('videoFileInput').addEventListener('change', (e) => {
+				const file = e.target.files[0];
+				if (file) {
+					const videoURL = URL.createObjectURL(file);
+					stageConfig.videoSrc = videoURL;
+					
+					// Rebuild stage with new video
+					if (stageConfig.background === 'video') {
+						rebuildStage();
+					}
+					
+					console.log('🎬 Video loaded:', file.name);
+				}
 			});
 
 			// Toggle platform

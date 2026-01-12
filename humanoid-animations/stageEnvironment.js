@@ -14,6 +14,9 @@ export class StageEnvironment {
         this.lasers = [];      // Support for laser effects
         this.strobeLight = null;
         this.lightingMode = 'simple';
+        this.videoElement = null;
+        this.videoTexture = null;
+        this.videoPlane = null;
     }
 
     /**
@@ -24,8 +27,9 @@ export class StageEnvironment {
             platform: true,
             djBooth: true,
             lighting: 'concert', // 'concert', 'studio', 'simple'
-            background: 'gradient', // 'gradient', 'space', 'stage'
+            background: 'gradient', // 'gradient', 'space', 'stage', 'video'
             decorations: true,
+            videoSrc: null, // Path to video file for video background
             ...options
         };
 
@@ -37,7 +41,7 @@ export class StageEnvironment {
         if (config.djBooth) this.createDJBooth();
         this.lightingMode = config.lighting; // Store mode for animation
         this.setupLighting(config.lighting);
-        this.setupBackground(config.background);
+        this.setupBackground(config.background, config.videoSrc);
         if (config.decorations) this.createDecorations();
 
         console.log('🎪 Stage environment created:', config);
@@ -507,7 +511,7 @@ export class StageEnvironment {
     /**
      * Setup background
      */
-    setupBackground(type = 'gradient') {
+    setupBackground(type = 'gradient', videoSrc = null) {
         switch (type) {
             case 'gradient':
                 this.createGradientBackground();
@@ -517,6 +521,21 @@ export class StageEnvironment {
                 break;
             case 'stage':
                 this.createStageBackground();
+                break;
+            case 'video':
+                this.createVideoBackground(videoSrc);
+                // Keep a dark gradient as fallback
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, 0, 512);
+                gradient.addColorStop(0, '#0a0a15');
+                gradient.addColorStop(1, '#1a1a2e');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 512, 512);
+                const texture = new THREE.CanvasTexture(canvas);
+                this.scene.background = texture;
                 break;
         }
     }
@@ -574,6 +593,90 @@ export class StageEnvironment {
         backdrop.position.set(0, 2, -3);
         this.scene.add(backdrop);
         this.stageObjects.push(backdrop);
+    }
+
+    /**
+     * Create video background
+     */
+    createVideoBackground(videoSrc = null) {
+        // Remove existing video background
+        if (this.videoPlane) {
+            this.scene.remove(this.videoPlane);
+            this.videoPlane.geometry.dispose();
+            this.videoPlane.material.dispose();
+            this.videoPlane = null;
+        }
+
+        if (this.videoElement) {
+            this.videoElement.pause();
+            this.videoElement.src = '';
+            this.videoElement = null;
+        }
+
+        if (this.videoTexture) {
+            this.videoTexture.dispose();
+            this.videoTexture = null;
+        }
+
+        // Create video element
+        const video = document.createElement('video');
+        video.loop = true;
+        video.muted = true; // Muted for autoplay to work
+        video.playsInline = true;
+        video.crossOrigin = 'anonymous';
+        
+        if (videoSrc) {
+            video.src = videoSrc;
+        } else {
+            // Default video path (you can change this)
+            video.src = './backgrounds/default-stage.mp4';
+        }
+
+        // Create video texture
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBAFormat;
+        videoTexture.colorSpace = THREE.SRGBColorSpace;
+
+        // Create large plane behind stage
+        const planeGeometry = new THREE.PlaneGeometry(40, 22.5); // 16:9 aspect ratio
+        const planeMaterial = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+            side: THREE.DoubleSide,
+            toneMapped: false
+        });
+
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.position.set(0, 5, -10); // Behind the stage
+        plane.rotation.y = 0;
+        
+        this.scene.add(plane);
+        this.videoPlane = plane;
+        this.videoElement = video;
+        this.videoTexture = videoTexture;
+
+        // Play video
+        video.play().catch(err => {
+            console.warn('⚠️ Video autoplay failed, user interaction required:', err);
+        });
+
+        console.log('🎬 Video background created:', videoSrc || 'default');
+    }
+
+    /**
+     * Change video source dynamically
+     */
+    setVideoSource(videoSrc) {
+        if (this.videoElement) {
+            this.videoElement.src = videoSrc;
+            this.videoElement.play().catch(err => {
+                console.warn('⚠️ Video playback failed:', err);
+            });
+            console.log('🎬 Video source changed:', videoSrc);
+        } else {
+            console.warn('⚠️ No video background active. Create one first.');
+        }
     }
 
     /**
@@ -806,6 +909,90 @@ export class StageEnvironment {
     }
 
     /**
+     * Create video background
+     */
+    createVideoBackground(videoSrc = null) {
+        // Remove existing video background
+        if (this.videoPlane) {
+            this.scene.remove(this.videoPlane);
+            this.videoPlane.geometry.dispose();
+            this.videoPlane.material.dispose();
+            this.videoPlane = null;
+        }
+
+        if (this.videoElement) {
+            this.videoElement.pause();
+            this.videoElement.src = '';
+            this.videoElement = null;
+        }
+
+        if (this.videoTexture) {
+            this.videoTexture.dispose();
+            this.videoTexture = null;
+        }
+
+        // Create video element
+        const video = document.createElement('video');
+        video.loop = true;
+        video.muted = true; // Muted for autoplay to work
+        video.playsInline = true;
+        video.crossOrigin = 'anonymous';
+        
+        if (videoSrc) {
+            video.src = videoSrc;
+        } else {
+            // Default video path (you can change this)
+            video.src = './backgrounds/default-stage.mp4';
+        }
+
+        // Create video texture
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.magFilter = THREE.LinearFilter;
+        videoTexture.format = THREE.RGBAFormat;
+        videoTexture.colorSpace = THREE.SRGBColorSpace;
+
+        // Create large plane behind stage
+        const planeGeometry = new THREE.PlaneGeometry(40, 22.5); // 16:9 aspect ratio
+        const planeMaterial = new THREE.MeshBasicMaterial({
+            map: videoTexture,
+            side: THREE.DoubleSide,
+            toneMapped: false
+        });
+
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.position.set(0, 5, -10); // Behind the stage
+        plane.rotation.y = 0;
+        
+        this.scene.add(plane);
+        this.videoPlane = plane;
+        this.videoElement = video;
+        this.videoTexture = videoTexture;
+
+        // Play video
+        video.play().catch(err => {
+            console.warn('⚠️ Video autoplay failed, user interaction required:', err);
+        });
+
+        console.log('🎬 Video background created:', videoSrc || 'default');
+    }
+
+    /**
+     * Change video source dynamically
+     */
+    setVideoSource(videoSrc) {
+        if (this.videoElement) {
+            this.videoElement.src = videoSrc;
+            this.videoElement.play().catch(err => {
+                console.warn('⚠️ Video playback failed:', err);
+            });
+            console.log('🎬 Video source changed:', videoSrc);
+        } else {
+            console.warn('⚠️ No video background active. Create one first.');
+        }
+    }
+
+    /**
      * Update animation loop (for animated effects)
      */
     update(deltaTime, elapsedTime) {
@@ -878,6 +1065,23 @@ export class StageEnvironment {
 
         this.lights.forEach(light => this.scene.remove(light));
         this.lights = [];
+
+        // Clear video background
+        if (this.videoPlane) {
+            this.scene.remove(this.videoPlane);
+            this.videoPlane.geometry.dispose();
+            this.videoPlane.material.dispose();
+            this.videoPlane = null;
+        }
+        if (this.videoElement) {
+            this.videoElement.pause();
+            this.videoElement.src = '';
+            this.videoElement = null;
+        }
+        if (this.videoTexture) {
+            this.videoTexture.dispose();
+            this.videoTexture = null;
+        }
 
         // Clear specific arrays
         this.movingHeads = [];
