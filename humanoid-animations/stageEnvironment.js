@@ -235,9 +235,11 @@ export class StageEnvironment {
         const leftPlatter = new THREE.Mesh(
             new THREE.CylinderGeometry(0.15, 0.15, 0.01),
             new THREE.MeshStandardMaterial({
-                color: 0x000000,
-                metalness: 1,
-                roughness: 0.1
+                color: 0xff0080,
+                emissive: 0xff0080,
+                emissiveIntensity: 2.5,
+                metalness: 0.9,
+                roughness: 0.2
             })
         );
         leftPlatter.position.set(-0.6, 0.82, 0);
@@ -251,9 +253,11 @@ export class StageEnvironment {
         const rightPlatter = new THREE.Mesh(
             new THREE.CylinderGeometry(0.15, 0.15, 0.01),
             new THREE.MeshStandardMaterial({
-                color: 0x000000,
-                metalness: 1,
-                roughness: 0.1
+                color: 0xff0080,
+                emissive: 0xff0080,
+                emissiveIntensity: 2.5,
+                metalness: 0.9,
+                roughness: 0.2
             })
         );
         rightPlatter.position.set(0.6, 0.82, 0);
