@@ -3,6 +3,7 @@
  * Tự động random giữa nhảy và tương tác với khán giả một cách tự nhiên
  */
 
+import * as THREE from 'three';
 import { loadMixamoAnimation } from './loadMixamoAnimation.js';
 
 export class DJPerformanceController {
