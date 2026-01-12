@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>🎭 Virtual Idol Stage - Test</title>
+	<style>
+		body {
+			margin: 0;
+			overflow: hidden;
+			font-family: 'Segoe UI', system-ui, sans-serif;
+			background: #000;
+		}
+
+		#controls {
+			position: fixed;
+			top: 20px;
+			right: 20px;
+			background: rgba(0, 0, 0, 0.85);
+			backdrop-filter: blur(10px);
+			padding: 20px;
+			border-radius: 12px;
+			border: 1px solid rgba(0, 212, 255, 0.3);
+			color: #fff;
+			z-index: 1000;
+			min-width: 250px;
+			max-height: 90vh;
+			overflow-y: auto;
+		}
+
+		#controls h3 {
+			margin: 0 0 15px 0;
+			color: #00d4ff;
+			font-size: 18px;
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		#controls hr {
+			border: none;
+			border-top: 1px solid rgba(255, 255, 255, 0.1);
+			margin: 15px 0;
+		}
+
+		.control-group {
+			margin-bottom: 15px;
+		}
+
+		.control-group label {
+			display: block;
+			margin-bottom: 5px;
+			font-size: 12px;
+			color: #aaa;
+			text-transform: uppercase;
+			letter-spacing: 0.5px;
+		}
+
+		button {
+			width: 100%;
+			padding: 10px;
+			margin: 5px 0;
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			border: none;
+			border-radius: 6px;
+			color: white;
+			cursor: pointer;
+			font-weight: 600;
+			transition: all 0.3s;
+			font-size: 14px;
+		}
+
+		button:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+		}
+
+		button:active {
+			transform: translateY(0);
+		}
+
+		button.secondary {
+			background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+			border: 1px solid rgba(0, 212, 255, 0.3);
+		}
+
+		button.danger {
+			background: linear-gradient(135deg, #ff0080 0%, #ff8c00 100%);
+		}
+
+		select {
+			width: 100%;
+			padding: 8px;
+			background: rgba(255, 255, 255, 0.1);
+			border: 1px solid rgba(0, 212, 255, 0.3);
+			border-radius: 6px;
+			color: #fff;
+			font-size: 14px;
+		}
+
+		.toggle-group {
+			display: flex;
+			gap: 5px;
+		}
+
+		.toggle-group button {
+			flex: 1;
+			font-size: 12px;
+			padding: 8px;
+		}
+
+		.info {
+			background: rgba(0, 212, 255, 0.1);
+			padding: 10px;
+			border-radius: 6px;
+			font-size: 12px;
+			color: #00d4ff;
+			margin-top: 15px;
+		}
+
+		.status {
+			display: inline-block;
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background: #00ff88;
+			animation: pulse 2s infinite;
+		}
+
+		@keyframes pulse {
+			0%, 100% { opacity: 1; }
+			50% { opacity: 0.3; }
+		}
+
+		#instructions {
+			position: fixed;
+			bottom: 20px;
+			left: 20px;
+			background: rgba(0, 0, 0, 0.85);
+			backdrop-filter: blur(10px);
+			padding: 15px 20px;
+			border-radius: 12px;
+			border: 1px solid rgba(0, 212, 255, 0.3);
+			color: #fff;
+			font-size: 12px;
+			max-width: 300px;
+		}
+
+		#instructions h4 {
+			margin: 0 0 10px 0;
+			color: #00d4ff;
+			font-size: 14px;
+		}
+
+		#instructions ul {
+			margin: 0;
+			padding-left: 20px;
+		}
+
+		#instructions li {
+			margin: 5px 0;
+			color: #aaa;
+		}
+	</style>
+</head>
+<body>
+	<div id="controls">
+		<h3>
+			<span class="status"></span>
+			🎭 Stage Controls
+		</h3>
+
+		<div class="control-group">
+			<label>Stage Theme</label>
+			<select id="themeSelect">
+				<option value="cyberpunk">🌆 Cyberpunk (Full)</option>
+				<option value="minimal">✨ Minimal (Simple)</option>
+				<option value="space">🌌 Space (Cosmic)</option>
+			</select>
+		</div>
+
+		<hr>
+
+		<div class="control-group">
+			<label>Lighting Mode</label>
+			<select id="lightingSelect">
+				<option value="concert">🎸 Concert (Dynamic)</option>
+				<option value="studio">🎬 Studio (3-Point)</option>
+				<option value="simple">💡 Simple (Basic)</option>
+			</select>
+		</div>
+
+		<div class="control-group">
+			<label>Background</label>
+			<select id="backgroundSelect">
+				<option value="gradient">🎨 Gradient</option>
+				<option value="space">🌠 Space</option>
+				<option value="stage">🎭 Stage Curtain</option>
+			</select>
+		</div>
+
+		<hr>
+
+		<div class="control-group">
+			<label>Stage Elements</label>
+			<div class="toggle-group">
+				<button id="togglePlatform" class="secondary">Platform ON</button>
+				<button id="toggleBooth" class="secondary">DJ Booth ON</button>
+			</div>
+			<button id="toggleDecorations" class="secondary" style="margin-top: 5px;">Decorations ON</button>
+		</div>
+
+		<hr>
+
+		<div class="control-group">
+			<label>Quick Actions</label>
+			<button id="rebuildStage">🔄 Rebuild Stage</button>
+			<button id="clearStage" class="danger">🗑️ Clear Stage</button>
+		</div>
+
+		<div class="info">
+			💡 <strong>Tip:</strong> Drag .vrm or .fbx files onto the window to test with your models!
+		</div>
+	</div>
+
+	<div id="instructions">
+		<h4>📖 How to Use</h4>
+		<ul>
+			<li><strong>Mouse drag</strong>: Rotate camera</li>
+			<li><strong>Mouse wheel</strong>: Zoom in/out</li>
+			<li><strong>Right click drag</strong>: Pan camera</li>
+			<li><strong>Drop files</strong>: Load VRM/FBX</li>
+		</ul>
+	</div>
+
+	<script type="module">
+		import './main.js';
+
+		// Wait for main.js to initialize
+		setTimeout(() => {
+			const stage = window.stage;
+			
+			if (!stage) {
+				console.error('Stage not initialized!');
+				return;
+			}
+
+			// State tracking
+			let stageConfig = {
+				platform: true,
+				djBooth: true,
+				decorations: true,
+				lighting: 'concert',
+				background: 'gradient'
+			};
+
+			// Theme selector
+			document.getElementById('themeSelect').addEventListener('change', (e) => {
+				const theme = e.target.value;
+				stage.setTheme(theme);
+				
+				// Update state based on theme
+				switch (theme) {
+					case 'cyberpunk':
+						stageConfig = { platform: true, djBooth: true, decorations: true, lighting: 'concert', background: 'gradient' };
+						break;
+					case 'minimal':
+						stageConfig = { platform: true, djBooth: false, decorations: false, lighting: 'studio', background: 'gradient' };
+						break;
+					case 'space':
+						stageConfig = { platform: true, djBooth: true, decorations: true, lighting: 'concert', background: 'space' };
+						break;
+				}
+				
+				updateButtonStates();
+				updateSelects();
+			});
+
+			// Lighting selector
+			document.getElementById('lightingSelect').addEventListener('change', (e) => {
+				stageConfig.lighting = e.target.value;
+				rebuildStage();
+			});
+
+			// Background selector
+			document.getElementById('backgroundSelect').addEventListener('change', (e) => {
+				stageConfig.background = e.target.value;
+				rebuildStage();
+			});
+
+			// Toggle platform
+			document.getElementById('togglePlatform').addEventListener('click', (e) => {
+				stageConfig.platform = !stageConfig.platform;
+				rebuildStage();
+				updateButtonStates();
+			});
+
+			// Toggle DJ booth
+			document.getElementById('toggleBooth').addEventListener('click', (e) => {
+				stageConfig.djBooth = !stageConfig.djBooth;
+				rebuildStage();
+				updateButtonStates();
+			});
+
+			// Toggle decorations
+			document.getElementById('toggleDecorations').addEventListener('click', (e) => {
+				stageConfig.decorations = !stageConfig.decorations;
+				rebuildStage();
+				updateButtonStates();
+			});
+
+			// Rebuild stage
+			document.getElementById('rebuildStage').addEventListener('click', () => {
+				rebuildStage();
+			});
+
+			// Clear stage
+			document.getElementById('clearStage').addEventListener('click', () => {
+				stage.clear();
+				stageConfig = { platform: false, djBooth: false, decorations: false, lighting: 'simple', background: 'gradient' };
+				updateButtonStates();
+			});
+
+			// Helper functions
+			function rebuildStage() {
+				stage.clear();
+				stage.setup(stageConfig);
+				console.log('🎪 Stage rebuilt:', stageConfig);
+			}
+
+			function updateButtonStates() {
+				const platformBtn = document.getElementById('togglePlatform');
+				const boothBtn = document.getElementById('toggleBooth');
+				const decorBtn = document.getElementById('toggleDecorations');
+
+				platformBtn.textContent = stageConfig.platform ? 'Platform ON' : 'Platform OFF';
+				platformBtn.style.background = stageConfig.platform 
+					? 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)'
+					: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+
+				boothBtn.textContent = stageConfig.djBooth ? 'DJ Booth ON' : 'DJ Booth OFF';
+				boothBtn.style.background = stageConfig.djBooth
+					? 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)'
+					: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+
+				decorBtn.textContent = stageConfig.decorations ? 'Decorations ON' : 'Decorations OFF';
+				decorBtn.style.background = stageConfig.decorations
+					? 'linear-gradient(135deg, #00ff88 0%, #00d4ff 100%)'
+					: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+			}
+
+			function updateSelects() {
+				document.getElementById('lightingSelect').value = stageConfig.lighting;
+				document.getElementById('backgroundSelect').value = stageConfig.background;
+			}
+
+			// Initialize button states
+			updateButtonStates();
+
+			console.log('🎭 Stage test interface ready!');
+			console.log('💡 Access stage via: window.stage');
+			console.log('🎨 Change theme: stage.setTheme("cyberpunk")');
+		}, 500);
+	</script>
+</body>
+</html>
