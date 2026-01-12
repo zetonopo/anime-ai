@@ -17,6 +17,7 @@ export class StageEnvironment {
         this.videoElement = null;
         this.videoTexture = null;
         this.videoPlane = null;
+        this.djBoothGroup = null; // Reference to DJ booth for toggling
     }
 
     /**
@@ -331,6 +332,7 @@ export class StageEnvironment {
 
         this.scene.add(boothGroup);
         this.stageObjects.push(boothGroup);
+        this.djBoothGroup = boothGroup; // Store reference for toggling
     }
 
     /**
