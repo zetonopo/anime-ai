@@ -14,6 +14,8 @@ export class DJPerformanceController {
         this.currentAction = null;
         this.performanceTimer = null;
         this.currentType = null;
+        this.lastPlayedDancing = null;
+        this.lastPlayedInteraction = null;
 
         // Animation libraries
         this.dancingAnimations = [
@@ -87,12 +89,25 @@ export class DJPerformanceController {
     }
 
     /**
-     * Random chọn animation từ library
+     * Random chọn animation từ library (không lặp lại animation vừa chơi)
      */
     getRandomAnimation(type) {
         const library = type === 'dancing' ? this.dancingAnimations : this.interactionAnimations;
-        const randomIndex = Math.floor(Math.random() * library.length);
-        return library[randomIndex];
+        const lastPlayed = type === 'dancing' ? this.lastPlayedDancing : this.lastPlayedInteraction;
+        
+        // Nếu chỉ có 1 animation trong library, return luôn
+        if (library.length === 1) {
+            return library[0];
+        }
+        
+        // Filter ra animations khác với last played
+        const availableAnimations = lastPlayed 
+            ? library.filter(anim => anim !== lastPlayed)
+            : library;
+        
+        // Random từ available animations
+        const randomIndex = Math.floor(Math.random() * availableAnimations.length);
+        return availableAnimations[randomIndex];
     }
 
     /**
@@ -112,6 +127,13 @@ export class DJPerformanceController {
         const pattern = this.selectNextPattern();
         const animationFile = this.getRandomAnimation(pattern.type);
         const duration = this.getRandomDuration(pattern.minDuration, pattern.maxDuration);
+
+        // Store as last played to prevent repeats
+        if (pattern.type === 'dancing') {
+            this.lastPlayedDancing = animationFile;
+        } else {
+            this.lastPlayedInteraction = animationFile;
+        }
 
         console.log(`🎵 Playing ${pattern.type}: ${animationFile.split('/').pop()} (${duration.toFixed(1)}s)`);
 
