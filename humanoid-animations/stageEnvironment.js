@@ -632,19 +632,23 @@ export class StageEnvironment {
             video.src = './backgrounds/default-stage.mp4';
         }
 
-        // Create video texture
+        // Create video texture with high quality settings
         const videoTexture = new THREE.VideoTexture(video);
-        videoTexture.minFilter = THREE.LinearFilter;
+        videoTexture.minFilter = THREE.LinearMipMapLinearFilter; // Trilinear filtering
         videoTexture.magFilter = THREE.LinearFilter;
         videoTexture.format = THREE.RGBAFormat;
         videoTexture.colorSpace = THREE.SRGBColorSpace;
+        videoTexture.generateMipmaps = true;
+        videoTexture.anisotropy = 16; // Maximum anisotropic filtering
 
-        // Create large plane behind stage
-        const planeGeometry = new THREE.PlaneGeometry(40, 22.5); // 16:9 aspect ratio
+        // Create large plane behind stage with segments for better detail
+        const planeGeometry = new THREE.PlaneGeometry(40, 22.5, 64, 36); // 16:9 with segments
         const planeMaterial = new THREE.MeshBasicMaterial({
             map: videoTexture,
             side: THREE.DoubleSide,
-            toneMapped: false
+            toneMapped: false,
+            depthWrite: true,
+            depthTest: true
         });
 
         const plane = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -906,75 +910,6 @@ export class StageEnvironment {
         group.add(glow);
 
         return group;
-    }
-
-    /**
-     * Create video background
-     */
-    createVideoBackground(videoSrc = null) {
-        // Remove existing video background
-        if (this.videoPlane) {
-            this.scene.remove(this.videoPlane);
-            this.videoPlane.geometry.dispose();
-            this.videoPlane.material.dispose();
-            this.videoPlane = null;
-        }
-
-        if (this.videoElement) {
-            this.videoElement.pause();
-            this.videoElement.src = '';
-            this.videoElement = null;
-        }
-
-        if (this.videoTexture) {
-            this.videoTexture.dispose();
-            this.videoTexture = null;
-        }
-
-        // Create video element
-        const video = document.createElement('video');
-        video.loop = true;
-        video.muted = true; // Muted for autoplay to work
-        video.playsInline = true;
-        video.crossOrigin = 'anonymous';
-        
-        if (videoSrc) {
-            video.src = videoSrc;
-        } else {
-            // Default video path (you can change this)
-            video.src = './backgrounds/default-stage.mp4';
-        }
-
-        // Create video texture
-        const videoTexture = new THREE.VideoTexture(video);
-        videoTexture.minFilter = THREE.LinearFilter;
-        videoTexture.magFilter = THREE.LinearFilter;
-        videoTexture.format = THREE.RGBAFormat;
-        videoTexture.colorSpace = THREE.SRGBColorSpace;
-
-        // Create large plane behind stage
-        const planeGeometry = new THREE.PlaneGeometry(40, 22.5); // 16:9 aspect ratio
-        const planeMaterial = new THREE.MeshBasicMaterial({
-            map: videoTexture,
-            side: THREE.DoubleSide,
-            toneMapped: false
-        });
-
-        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-        plane.position.set(0, 5, -10); // Behind the stage
-        plane.rotation.y = 0;
-        
-        this.scene.add(plane);
-        this.videoPlane = plane;
-        this.videoElement = video;
-        this.videoTexture = videoTexture;
-
-        // Play video
-        video.play().catch(err => {
-            console.warn('⚠️ Video autoplay failed, user interaction required:', err);
-        });
-
-        console.log('🎬 Video background created:', videoSrc || 'default');
     }
 
     /**
