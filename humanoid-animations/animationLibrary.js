@@ -27,7 +27,9 @@ export const animationLibrary = {
             'HipHopDancing.fbx',
             'Flail.fbx', 
             'NorthernSoulFloorCombo.fbx',
-            'BreakdanceFreeze.fbx'
+            'BreakdanceFreeze.fbx',
+            'Breakdance1990.fbx',
+            'Breakdance19902.fbx'
         ],
         description: 'Dance performances - various energetic dance styles for entertainment',
         duration: 15,

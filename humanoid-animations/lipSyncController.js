@@ -87,4 +87,18 @@ export class LipSyncController {
             this.vrm.expressionManager.setValue('ee', 0);
         }
     }
+    
+    /**
+     * Start talking animation (called when AI speaks)
+     */
+    startTalking() {
+        this.startLipSync();
+    }
+    
+    /**
+     * Stop talking animation
+     */
+    stopTalking() {
+        this.stopLipSync();
+    }
 }

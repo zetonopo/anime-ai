@@ -8,6 +8,7 @@ import { LipSyncController } from './lipSyncController.js';
 import { getRandomAnimationFile, animationLibrary } from './animationLibrary.js';
 import { StageEnvironment } from './stageEnvironment.js';
 import { DJPerformanceController } from './djPerformanceController.js';
+import { GeminiLiveAI } from './geminiLiveAI.js';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
 
 // renderer
@@ -169,13 +170,9 @@ function initializeAI() {
 	
 	// Initialize lip-sync controller
 	lipSync = new LipSyncController(currentVrm);
+	window.lipSync = lipSync;
 	
-	// Initialize Gemini Live controller
-	geminiLive = new GeminiLiveController(
-		GEMINI_API_KEY,
-		handleAnimationCommand,
-		handleAudioOutput
-	);
+	// GeminiLiveAI will be initialized on connect (lazy init)
 	
 	console.log('✅ AI System initialized');
 }
@@ -237,14 +234,43 @@ function handleAudioOutput(audioData) {
 
 // Connect to Gemini Live API
 async function connectAI() {
-	if (!geminiLive) {
+	if (!currentVrm) {
 		alert('Please load VRM model first!');
-		return;
+		return false;
+	}
+	
+	if (!geminiLive) {
+		// Initialize GeminiLiveAI
+		geminiLive = new GeminiLiveAI(GEMINI_API_KEY);
+		
+		// Setup callbacks
+		geminiLive.onResponse((type, data) => {
+			if (type === 'text') {
+				console.log('🤖 AI:', data);
+				if (window.onAIResponse) {
+					window.onAIResponse(data);
+				}
+			}
+		});
+		
+		geminiLive.onAudio((event) => {
+			if (event === 'playing') {
+				// Trigger mouth animation during speech
+				if (lipSync) {
+					lipSync.startTalking();
+				}
+			} else if (event === 'ended') {
+				if (lipSync) {
+					lipSync.stopTalking();
+				}
+			}
+		});
+		
+		window.geminiLive = geminiLive;
 	}
 	
 	const success = await geminiLive.connect();
 	if (success) {
-		await geminiLive.startMicrophone();
 		console.log('🎤 AI Live connection active!');
 		return true;
 	}
