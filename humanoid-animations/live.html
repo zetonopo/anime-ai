@@ -271,6 +271,39 @@
             background: #2a2a4a;
             color: white;
         }
+
+        /* Toggle buttons */
+        .toggle-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .toggle-btn {
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 107, 157, 0.5);
+        }
+
+        .toggle-btn.active {
+            background: linear-gradient(45deg, #FF6B9D, #FEC163);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 0 15px rgba(255, 107, 157, 0.5);
+        }
     </style>
 </head>
 <body>
@@ -321,6 +354,15 @@
                     <option value="space">🌠 Deep Space</option>
                     <option value="stage">🎭 Classic Curtain</option>
                 </select>
+            </div>
+
+            <div class="control-item">
+                <label>Stage Elements</label>
+                <div class="toggle-group">
+                    <button id="togglePlatform" class="toggle-btn active">Platform</button>
+                    <button id="toggleBooth" class="toggle-btn active">DJ Booth</button>
+                </div>
+                <button id="toggleDecorations" class="toggle-btn active" style="width: 100%;">Side Decorations</button>
             </div>
         </div>
     </div>
@@ -509,6 +551,7 @@
                 }
                 
                 updateSelects();
+                updateButtonStates();
                 console.log('🎭 Theme changed:', theme);
             });
 
@@ -526,6 +569,27 @@
                 console.log('🎨 Background changed:', e.target.value);
             });
 
+            // Toggle platform
+            document.getElementById('togglePlatform').addEventListener('click', () => {
+                stageConfig.platform = !stageConfig.platform;
+                rebuildStage();
+                updateButtonStates();
+            });
+
+            // Toggle DJ booth
+            document.getElementById('toggleBooth').addEventListener('click', () => {
+                stageConfig.djBooth = !stageConfig.djBooth;
+                rebuildStage();
+                updateButtonStates();
+            });
+
+            // Toggle decorations
+            document.getElementById('toggleDecorations').addEventListener('click', () => {
+                stageConfig.decorations = !stageConfig.decorations;
+                rebuildStage();
+                updateButtonStates();
+            });
+
             function rebuildStage() {
                 stage.clear();
                 stage.setup(stageConfig);
@@ -534,6 +598,21 @@
             function updateSelects() {
                 document.getElementById('lightingSelect').value = stageConfig.lighting;
                 document.getElementById('backgroundSelect').value = stageConfig.background;
+            }
+
+            function updateButtonStates() {
+                const platformBtn = document.getElementById('togglePlatform');
+                const boothBtn = document.getElementById('toggleBooth');
+                const decorBtn = document.getElementById('toggleDecorations');
+
+                if (stageConfig.platform) platformBtn.classList.add('active');
+                else platformBtn.classList.remove('active');
+
+                if (stageConfig.djBooth) boothBtn.classList.add('active');
+                else boothBtn.classList.remove('active');
+
+                if (stageConfig.decorations) decorBtn.classList.add('active');
+                else decorBtn.classList.remove('active');
             }
 
             console.log('🎭 Stage controls initialized');
