@@ -266,6 +266,12 @@ async function connectAI() {
 			}
 		});
 		
+		// Setup animation callback
+		geminiLive.onAnimation((action) => {
+			console.log(`🎬 Triggering animation: ${action}`);
+			handleAnimationCommand(action);
+		});
+		
 		window.geminiLive = geminiLive;
 	}
 	

@@ -15,6 +15,7 @@ export class GeminiLiveAI {
         this.processor = null;
         this.onResponseCallback = null;
         this.onAudioCallback = null;
+        this.onAnimationCallback = null; // Callback for animation commands
         
         // Audio queue for playback
         this.audioQueue = [];
@@ -28,7 +29,20 @@ export class GeminiLiveAI {
 You love music, dancing, and interacting with your fans. 
 You speak Vietnamese naturally and expressively.
 Keep responses short and energetic, like a real livestream idol.
-Use emojis occasionally to show emotion.`,
+Use emojis occasionally to show emotion.
+
+IMPORTANT: When user asks you to do actions, include these tags in your response:
+- [dance] - when user asks to dance or mentions dancing
+- [wave] - when greeting or saying hi/hello
+- [cheer] - when celebrating or excited
+- [bow] - when thanking or being polite
+- [kiss] - when sending love or kisses
+
+Example: "Okay let's dance! [dance]" or "Hi there! [wave] Welcome to my stream!"
+
+Available actions: dance, wave, cheer, bow, kiss, idle
+
+Always respond in Vietnamese unless asked otherwise.`,
         };
     }
 
@@ -115,9 +129,9 @@ Use emojis occasionally to show emotion.`,
                 // Convert to base64
                 const base64 = this.arrayBufferToBase64(pcmData.buffer);
                 
-                // Send to Gemini
+                // Send to Gemini with correct structure
                 this.session.sendRealtimeInput({
-                    audio: {
+                    media: {
                         data: base64,
                         mimeType: "audio/pcm;rate=16000"
                     }
@@ -165,9 +179,44 @@ Use emojis occasionally to show emotion.`,
                     // Text response (for display)
                     if (part.text && this.onResponseCallback) {
                         this.onResponseCallback('text', part.text);
+                        
+                        // Parse for animation commands
+                        this.parseAnimationCommands(part.text);
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Parse text for animation command tags
+     */
+    parseAnimationCommands(text) {
+        if (!this.onAnimationCallback) return;
+        
+        // Animation tag mapping
+        const animationMap = {
+            '[dance]': 'dancing',
+            '[wave]': 'greeting',
+            '[cheer]': 'cheering',
+            '[bow]': 'bowing',
+            '[kiss]': 'blowing_kiss',
+            '[clap]': 'clapping',
+            '[point]': 'pointing',
+            '[laugh]': 'laughing',
+            '[cry]': 'crying',
+            '[angry]': 'angry'
+        };
+        
+        // Check for animation tags
+        for (const [tag, action] of Object.entries(animationMap)) {
+            if (text.includes(tag)) {
+                console.log(`🎭 Animation triggered: ${action}`);
+                this.onAnimationCallback(action);
+                // Only trigger first found animation
+                break;
+            }
+        }
         }
     }
 
@@ -324,5 +373,12 @@ Use emojis occasionally to show emotion.`,
      */
     onAudio(callback) {
         this.onAudioCallback = callback;
+    }
+    
+    /**
+     * Set callback for animation commands
+     */
+    onAnimation(callback) {
+        this.onAnimationCallback = callback;
     }
 }
