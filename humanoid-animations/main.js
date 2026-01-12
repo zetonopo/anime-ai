@@ -7,6 +7,7 @@ import { GeminiLiveController } from './geminiLiveController.js';
 import { LipSyncController } from './lipSyncController.js';
 import { getRandomAnimationFile, animationLibrary } from './animationLibrary.js';
 import { StageEnvironment } from './stageEnvironment.js';
+import { DJPerformanceController } from './djPerformanceController.js';
 import GUI from 'three/addons/libs/lil-gui.module.min.js';
 
 // renderer
@@ -54,6 +55,7 @@ let currentAction = undefined;
 // AI Controllers
 let geminiLive = null;
 let lipSync = null;
+let djPerformance = null;
 const GEMINI_API_KEY = 'AIzaSyDV4NrwTl-lGAfArmf-C_FWhCt0fzi5ZOg'; // TODO: Replace with your API key
 
 // Expose globals for testing
@@ -64,6 +66,7 @@ if (typeof window !== 'undefined') {
 	window.currentAction = undefined;
 	window.geminiLive = null;
 	window.lipSync = null;
+	window.djPerformance = null;
 	window.animationLibrary = animationLibrary;
 	window.getRandomAnimationFile = getRandomAnimationFile;
 }
@@ -115,6 +118,11 @@ function loadVRM( modelUrl ) {
 			// create AnimationMixer for VRM
 			currentMixer = new THREE.AnimationMixer( currentVrm.scene );
 			window.currentMixer = currentMixer; // Expose for testing
+
+			// Initialize DJ Performance Controller
+			djPerformance = new DJPerformanceController(currentVrm, currentMixer);
+			window.djPerformance = djPerformance; // Expose for testing
+			console.log('🎧 DJ Performance Controller initialized');
 
 			// Disable frustum culling
 			vrm.scene.traverse( ( obj ) => {
@@ -435,6 +443,47 @@ Object.keys(animationLibrary).forEach(action => {
 });
 
 animFolder.open();
+
+// DJ Performance folder
+const djFolder = gui.addFolder('🎧 DJ Performance');
+
+const djControls = {
+	startPerformance: () => {
+		if (djPerformance) {
+			djPerformance.startPerformance();
+		} else {
+			console.warn('Load VRM model first!');
+		}
+	},
+	stopPerformance: () => {
+		if (djPerformance) djPerformance.stopPerformance();
+	},
+	playDancing: () => {
+		if (djPerformance) djPerformance.playDancing();
+	},
+	playInteraction: () => {
+		if (djPerformance) djPerformance.playInteraction();
+	},
+	energyLow: () => {
+		if (djPerformance) djPerformance.setEnergy('low');
+	},
+	energyMedium: () => {
+		if (djPerformance) djPerformance.setEnergy('medium');
+	},
+	energyHigh: () => {
+		if (djPerformance) djPerformance.setEnergy('high');
+	}
+};
+
+djFolder.add(djControls, 'startPerformance').name('▶️ Start Auto Performance');
+djFolder.add(djControls, 'stopPerformance').name('⏸️ Stop Performance');
+djFolder.add(djControls, 'playDancing').name('🕺 Random Dance');
+djFolder.add(djControls, 'playInteraction').name('👋 Random Interaction');
+const energyFolder = djFolder.addFolder('⚡ Energy Level');
+energyFolder.add(djControls, 'energyLow').name('🔵 Low (Chill)');
+energyFolder.add(djControls, 'energyMedium').name('🟢 Medium (Balanced)');
+energyFolder.add(djControls, 'energyHigh').name('🔴 High (Intense)');
+djFolder.open();
 
 // file input
 
