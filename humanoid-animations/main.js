@@ -348,12 +348,12 @@ async function loadSequence( urls ) {
 
 }
 
-// helpers
-const gridHelper = new THREE.GridHelper( 10, 10 );
-scene.add( gridHelper );
+// helpers (commented out - stage has its own grid)
+// const gridHelper = new THREE.GridHelper( 10, 10 );
+// scene.add( gridHelper );
 
-const axesHelper = new THREE.AxesHelper( 5 );
-scene.add( axesHelper );
+// const axesHelper = new THREE.AxesHelper( 5 );
+// scene.add( axesHelper );
 
 // animate
 const clock = new THREE.Clock();
