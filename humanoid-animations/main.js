@@ -289,18 +289,13 @@ async function loadFBX( animationUrl ) {
 		const clip = await loadMixamoAnimation( animationUrl, currentVrm );
 
 		const newAction = currentMixer.clipAction( clip );
-		newAction.reset();
-		newAction.setLoop( THREE.LoopRepeat );
-		newAction.clampWhenFinished = true;
-		newAction.enable = true;
-		newAction.setEffectiveTimeScale( 1 );
-		newAction.setEffectiveWeight( 1 );
+		newAction.reset().play();
+		newAction.loop = THREE.LoopRepeat; // Ensure it loops
 
 		if ( currentAction && currentAction !== newAction ) {
-			// Smooth crossfade with synchronized timing
-			currentAction.crossFadeTo( newAction, 0.5, true ); // warp = true for smooth sync
-		} else {
-			newAction.play();
+
+			currentAction.crossFadeTo( newAction, 0.5, false );
+
 		}
 
 		currentAction = newAction;

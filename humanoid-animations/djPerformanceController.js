@@ -150,21 +150,18 @@ export class DJPerformanceController {
 
             const newAction = this.mixer.clipAction(clip);
             
-            // Configure new action properly
-            newAction.reset();
-            newAction.setLoop(THREE.LoopRepeat);
-            newAction.clampWhenFinished = true;
-            newAction.setEffectiveTimeScale(1);
-            newAction.setEffectiveWeight(1);
-            
-            // Smooth crossfade from current action
+            // Crossfade from current action
             if (this.currentAction) {
                 const fadeTime = pattern.type === 'interaction' ? 0.3 : 0.5;
-                // Use crossFadeTo instead of fadeIn/fadeOut for smoother transition
-                this.currentAction.crossFadeTo(newAction, fadeTime, true); // warp = true
+                newAction.reset();
+                newAction.fadeIn(fadeTime);
+                this.currentAction.fadeOut(fadeTime);
             } else {
-                newAction.play();
+                newAction.fadeIn(0.5);
             }
+
+            newAction.setLoop(THREE.LoopRepeat);
+            newAction.play();
 
             this.currentAction = newAction;
             this.currentType = pattern.type;
@@ -193,18 +190,14 @@ export class DJPerformanceController {
             if (clip) {
                 const action = this.mixer.clipAction(clip);
                 
-                action.reset();
-                action.setLoop(THREE.LoopRepeat);
-                action.clampWhenFinished = true;
-                action.setEffectiveTimeScale(1);
-                action.setEffectiveWeight(1);
-                
                 if (this.currentAction) {
-                    this.currentAction.crossFadeTo(action, 0.5, true);
-                } else {
-                    action.play();
+                    action.reset();
+                    action.fadeIn(0.5);
+                    this.currentAction.fadeOut(0.5);
                 }
                 
+                action.setLoop(THREE.LoopRepeat);
+                action.play();
                 this.currentAction = action;
             }
         } catch (error) {
@@ -221,18 +214,14 @@ export class DJPerformanceController {
             if (clip) {
                 const action = this.mixer.clipAction(clip);
                 
-                action.reset();
-                action.setLoop(THREE.LoopRepeat);
-                action.clampWhenFinished = true;
-                action.setEffectiveTimeScale(1);
-                action.setEffectiveWeight(1);
-                
                 if (this.currentAction) {
-                    this.currentAction.crossFadeTo(action, 0.3, true);
-                } else {
-                    action.play();
+                    action.reset();
+                    action.fadeIn(0.3);
+                    this.currentAction.fadeOut(0.3);
                 }
                 
+                action.setLoop(THREE.LoopRepeat);
+                action.play();
                 this.currentAction = action;
             }
         } catch (error) {
