@@ -10,6 +10,10 @@ export class StageEnvironment {
         this.scene = scene;
         this.stageObjects = [];
         this.lights = [];
+        this.movingHeads = []; // Support for animated spotlights
+        this.lasers = [];      // Support for laser effects
+        this.strobeLight = null;
+        this.lightingMode = 'simple';
     }
 
     /**
@@ -31,6 +35,7 @@ export class StageEnvironment {
         // Build stage elements
         if (config.platform) this.createPlatform();
         if (config.djBooth) this.createDJBooth();
+        this.lightingMode = config.lighting; // Store mode for animation
         this.setupLighting(config.lighting);
         this.setupBackground(config.background);
         if (config.decorations) this.createDecorations();
@@ -99,23 +104,23 @@ export class StageEnvironment {
         // Neon edge strips (4 sides)
         const edgeHeight = 0.08;
         const edgeWidth = 0.03;
-        
+
         // Front edge
         const frontEdge = this.createNeonStrip(6, edgeHeight, edgeWidth, 0xff00ff);
         frontEdge.position.set(0, 0.04, 2);
         platformGroup.add(frontEdge);
-        
+
         // Back edge
         const backEdge = this.createNeonStrip(6, edgeHeight, edgeWidth, 0x00ffff);
         backEdge.position.set(0, 0.04, -2);
         platformGroup.add(backEdge);
-        
+
         // Left edge
         const leftEdge = this.createNeonStrip(4, edgeHeight, edgeWidth, 0xff00ff);
         leftEdge.rotation.y = Math.PI / 2;
         leftEdge.position.set(-3, 0.04, 0);
         platformGroup.add(leftEdge);
-        
+
         // Right edge
         const rightEdge = this.createNeonStrip(4, edgeHeight, edgeWidth, 0x00ffff);
         rightEdge.rotation.y = Math.PI / 2;
@@ -129,7 +134,7 @@ export class StageEnvironment {
             [-2.85, 0, -1.85],
             [2.85, 0, -1.85]
         ];
-        
+
         corners.forEach(pos => {
             const cornerLight = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.05, 0.08, 0.3),
@@ -167,7 +172,7 @@ export class StageEnvironment {
      */
     createDJBooth() {
         const boothGroup = new THREE.Group();
-        boothGroup.position.set(0, 0, -1.3);
+        boothGroup.position.set(0, 0, 0.8); // Moved forward - character plays DJ from behind
 
         // Booth base/frame
         const frameGeometry = new THREE.BoxGeometry(2.5, 0.1, 1.2);
@@ -200,14 +205,14 @@ export class StageEnvironment {
             metalness: 0.9,
             roughness: 0.1
         });
-        
+
         const legPositions = [
             [-1.0, 0.35, -0.5],
             [-1.0, 0.35, 0.5],
             [1.0, 0.35, -0.5],
             [1.0, 0.35, 0.5]
         ];
-        
+
         legPositions.forEach(pos => {
             const leg = new THREE.Mesh(legGeometry, legMaterial);
             leg.position.set(...pos);
@@ -226,7 +231,7 @@ export class StageEnvironment {
         const leftBase = new THREE.Mesh(turntableBaseGeo, turntableBaseMat);
         leftBase.position.set(-0.6, 0.80, 0);
         boothGroup.add(leftBase);
-        
+
         const leftPlatter = new THREE.Mesh(
             new THREE.CylinderGeometry(0.15, 0.15, 0.01),
             new THREE.MeshStandardMaterial({
@@ -242,7 +247,7 @@ export class StageEnvironment {
         const rightBase = new THREE.Mesh(turntableBaseGeo, turntableBaseMat);
         rightBase.position.set(0.6, 0.80, 0);
         boothGroup.add(rightBase);
-        
+
         const rightPlatter = new THREE.Mesh(
             new THREE.CylinderGeometry(0.15, 0.15, 0.01),
             new THREE.MeshStandardMaterial({
@@ -284,7 +289,7 @@ export class StageEnvironment {
             { color: 0xff00ff, pos: [0, 0.69, 0.6] },
             { color: 0x00ffff, pos: [0, 0.69, -0.6] }
         ];
-        
+
         ledColors.forEach(({ color, pos }) => {
             const ledStrip = new THREE.Mesh(
                 new THREE.BoxGeometry(2.3, 0.02, 0.03),
@@ -332,6 +337,9 @@ export class StageEnvironment {
                 break;
             case 'studio':
                 this.createStudioLighting();
+                break;
+            case 'club':
+                this.createClubLighting();
                 break;
             default:
                 this.createSimpleLighting();
@@ -404,6 +412,92 @@ export class StageEnvironment {
         this.lights.push(simpleLight);
     }
 
+    createClubLighting() {
+        // Dark atmosphere (Low ambient)
+        const ambientLight = new THREE.AmbientLight(0x050510);
+        this.scene.add(ambientLight);
+        this.lights.push(ambientLight);
+
+        // Moving Heads (Spotlights)
+        const colors = [0xff0055, 0x00ffaa, 0x5500ff, 0xffaa00];
+
+        for (let i = 0; i < 4; i++) {
+            const spotLight = new THREE.SpotLight(colors[i], 8); // High intensity
+            spotLight.position.set(
+                (i % 2 === 0 ? -4 : 4),
+                5,
+                (i < 2 ? -4 : 4)
+            );
+            spotLight.angle = Math.PI / 8;
+            spotLight.penumbra = 0.2;
+            spotLight.distance = 25;
+            spotLight.castShadow = true;
+
+            // Target for the spotlight to look at (will move this)
+            const target = new THREE.Object3D();
+            target.position.set(0, 0, 0);
+            this.scene.add(target);
+            spotLight.target = target;
+
+            this.scene.add(spotLight);
+            this.lights.push(spotLight);
+            // Add target to stageObjects so it gets cleaned up
+            this.stageObjects.push(target);
+
+            this.movingHeads.push({
+                light: spotLight,
+                target: target,
+                basePhase: i * (Math.PI / 2),
+                speed: 1.0
+            });
+        }
+
+        // Laser Beams
+        const laserGeometry = new THREE.CylinderGeometry(0.01, 0.01, 15);
+        // Rotate geometry so it aligns with Z axis for easier pivot rotation
+        laserGeometry.rotateX(Math.PI / 2);
+
+        const laserMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff00,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const laserCount = 8;
+        for (let i = 0; i < laserCount; i++) {
+            // Group to pivot the laser
+            const pivot = new THREE.Group();
+            pivot.position.set(0, 4.5, -3); // Back center high
+
+            const laser = new THREE.Mesh(laserGeometry, laserMaterial.clone());
+            laser.material.color.setHSL(i / laserCount, 1, 0.5);
+
+            // Offset laser from pivot center to create fan/array effect
+            laser.position.z = 7.5; // Half length
+
+            pivot.add(laser);
+
+            // Initial rotation pattern
+            pivot.rotation.y = (i / laserCount) * Math.PI * 2;
+
+            this.scene.add(pivot);
+            this.stageObjects.push(pivot);
+
+            this.lasers.push({
+                pivot: pivot,
+                speed: (i % 2 === 0 ? 1 : -1) * (0.2 + Math.random() * 0.5),
+                baseY: (i / laserCount) * Math.PI * 2
+            });
+        }
+
+        // Strobe Light (Point light that flashes)
+        this.strobeLight = new THREE.PointLight(0xffffff, 0, 40);
+        this.strobeLight.position.set(0, 4, 0);
+        this.scene.add(this.strobeLight);
+        this.lights.push(this.strobeLight);
+    }
+
     /**
      * Setup background
      */
@@ -426,15 +520,15 @@ export class StageEnvironment {
         canvas.width = 512;
         canvas.height = 512;
         const ctx = canvas.getContext('2d');
-        
+
         const gradient = ctx.createLinearGradient(0, 0, 0, 512);
         gradient.addColorStop(0, '#1a1a2e');
         gradient.addColorStop(0.5, '#16213e');
         gradient.addColorStop(1, '#0f3460');
-        
+
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 512, 512);
-        
+
         const texture = new THREE.CanvasTexture(canvas);
         this.scene.background = texture;
     }
@@ -445,11 +539,11 @@ export class StageEnvironment {
         canvas.width = 1024;
         canvas.height = 1024;
         const ctx = canvas.getContext('2d');
-        
+
         // Dark space
         ctx.fillStyle = '#000510';
         ctx.fillRect(0, 0, 1024, 1024);
-        
+
         // Random stars
         ctx.fillStyle = '#ffffff';
         for (let i = 0; i < 500; i++) {
@@ -458,7 +552,7 @@ export class StageEnvironment {
             const size = Math.random() * 2;
             ctx.fillRect(x, y, size, size);
         }
-        
+
         const texture = new THREE.CanvasTexture(canvas);
         this.scene.background = texture;
     }
@@ -501,7 +595,7 @@ export class StageEnvironment {
             [-2, 0.05, -1.5],
             [2, 0.05, -1.5]
         ];
-        
+
         spotPositions.forEach((pos, i) => {
             const spotLight = new THREE.Mesh(
                 new THREE.CylinderGeometry(0.12, 0.08, 0.05),
@@ -536,6 +630,106 @@ export class StageEnvironment {
     }
 
     /**
+     * Create futuristic holographic texture
+     */
+    createHoloScreenTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 1024; // Portrait aspect ratio
+        const ctx = canvas.getContext('2d');
+
+        // Background (semi-transparent dark)
+        ctx.fillStyle = 'rgba(0, 10, 30, 0.9)';
+        ctx.fillRect(0, 0, 512, 1024);
+
+        // Grid pattern
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+        ctx.lineWidth = 2;
+        const gridSize = 64;
+
+        ctx.beginPath();
+        // Vertical lines
+        for (let x = 0; x <= 512; x += gridSize) {
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, 1024);
+        }
+        // Horizontal lines
+        for (let y = 0; y <= 1024; y += gridSize) {
+            ctx.moveTo(0, y);
+            ctx.lineTo(512, y);
+        }
+        ctx.stroke();
+
+        // Hexagon pattern overlay (top and bottom)
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 0, 255, 0.2)';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 20; i++) {
+            // Random decorative lines
+            const y = Math.random() * 1024;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(512, y);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // Main Title: AKUMA
+        ctx.save();
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 20;
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 80px Arial'; // Simplified font for canvas
+        ctx.textAlign = 'center';
+        ctx.translate(256, 300);
+        ctx.fillText('AKUMA', 0, 0);
+
+        // Japanese Subtitle (optional aesthetic)
+        ctx.font = '40px Arial';
+        ctx.fillStyle = '#ff00ff';
+        ctx.shadowColor = '#ff00ff';
+        ctx.fillText('悪魔', 0, 60);
+        ctx.restore();
+
+        // Info Block
+        ctx.save();
+        ctx.translate(256, 500);
+        ctx.fillStyle = '#00ffff';
+        ctx.font = 'bold 30px Arial';
+        ctx.textAlign = 'center';
+
+        const tags = ['DANCE', 'MUSIC', 'EVIL'];
+        tags.forEach((tag, i) => {
+            const yOffset = i * 80;
+            // Tag Box
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(-150, yOffset, 300, 50);
+
+            // Text
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00ffff';
+            ctx.fillText(tag, 0, yOffset + 35);
+
+            // Progress Bar visual
+            ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
+            ctx.fillRect(-140, yOffset + 55, 280, 5);
+            ctx.fillStyle = '#00ffff';
+            ctx.fillRect(-140, yOffset + 55, 100 + Math.random() * 100, 5);
+        });
+        ctx.restore();
+
+        // Tech borders
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 10;
+        ctx.strokeRect(10, 10, 492, 1004);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.anisotropy = 16;
+        return texture;
+    }
+
+    /**
      * Create detailed screen panel with frame
      */
     createScreenPanel() {
@@ -554,13 +748,13 @@ export class StageEnvironment {
         const frameParts = [
             new THREE.BoxGeometry(1.7, frameThickness, frameDepth), // top
             new THREE.BoxGeometry(1.7, frameThickness, frameDepth), // bottom
-            new THREE.BoxGeometry(frameThickness, 2.2, frameDepth), // left
-            new THREE.BoxGeometry(frameThickness, 2.2, frameDepth)  // right
+            new THREE.BoxGeometry(frameThickness, 3.2, frameDepth), // left (taller)
+            new THREE.BoxGeometry(frameThickness, 3.2, frameDepth)  // right (taller)
         ];
 
         const framePositions = [
-            [0, 1.1, 0],
-            [0, -1.1, 0],
+            [0, 1.6, 0],  // Scaled up for taller screen
+            [0, -1.6, 0],
             [-0.85, 0, 0],
             [0.85, 0, 0]
         ];
@@ -572,24 +766,30 @@ export class StageEnvironment {
         });
 
         // Holographic screen
-        const screenGeo = new THREE.PlaneGeometry(1.5, 2);
-        const screenMat = new THREE.MeshStandardMaterial({
-            color: 0x00ffff,
-            emissive: 0x00ffff,
-            emissiveIntensity: 1.5,
+        // Holographic screen
+        const screenGeo = new THREE.PlaneGeometry(1.5, 3); // Make it taller for portrait content
+
+        const holoTexture = this.createHoloScreenTexture();
+
+        const screenMat = new THREE.MeshBasicMaterial({
+            map: holoTexture,
+            color: 0xffffff,
             transparent: true,
-            opacity: 0.4,
-            side: THREE.DoubleSide
+            opacity: 0.9,
+            side: THREE.DoubleSide,
+            blending: THREE.AdditiveBlending // Glow effect
         });
         const screen = new THREE.Mesh(screenGeo, screenMat);
+        screen.position.y = 0; // Adjust position if size changed
         group.add(screen);
 
         // Glowing border effect
-        const glowGeo = new THREE.PlaneGeometry(1.6, 2.1);
+        // Glowing border effect (Matched to new size)
+        const glowGeo = new THREE.PlaneGeometry(1.6, 3.1);
         const glowMat = new THREE.MeshBasicMaterial({
             color: 0xff00ff,
             transparent: true,
-            opacity: 0.2,
+            opacity: 0.3,
             side: THREE.DoubleSide
         });
         const glow = new THREE.Mesh(glowGeo, glowMat);
@@ -621,6 +821,36 @@ export class StageEnvironment {
                 light.position.z = Math.sin(elapsedTime * speed) * radius;
             }
         });
+
+        // Club Lighting Animations
+        if (this.lightingMode === 'club') {
+            // Animate moving heads
+            this.movingHeads.forEach((head, i) => {
+                const time = elapsedTime * head.speed + head.basePhase;
+                // Move targets in a figure-8 or circle on the floor
+                head.target.position.x = Math.sin(time) * 3;
+                head.target.position.z = Math.cos(time * 0.7) * 3;
+                head.target.position.y = Math.abs(Math.sin(time * 0.5)) * 1.5; // Up and down slightly
+            });
+
+            // Animate lasers
+            this.lasers.forEach(laser => {
+                laser.pivot.rotation.z += laser.speed * deltaTime;
+                laser.pivot.rotation.x = Math.sin(elapsedTime * 2 + laser.baseY) * 0.3; // Fan wave effect
+                laser.pivot.rotation.y += laser.speed * deltaTime * 0.5; // Slow rotation
+            });
+
+            // Random Strobe
+            if (this.strobeLight) {
+                // Flash every ~0.5 seconds for a frame
+                const strobeFreq = Math.sin(elapsedTime * 20); // Fast cycle
+                if (strobeFreq > 0.95) {
+                    this.strobeLight.intensity = 8;
+                } else {
+                    this.strobeLight.intensity = 0;
+                }
+            }
+        }
     }
 
     /**
@@ -642,6 +872,11 @@ export class StageEnvironment {
 
         this.lights.forEach(light => this.scene.remove(light));
         this.lights = [];
+
+        // Clear specific arrays
+        this.movingHeads = [];
+        this.lasers = [];
+        this.strobeLight = null;
     }
 
     /**
