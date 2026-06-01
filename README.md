@@ -1,49 +1,74 @@
-# VRM Character Module for AI Voice Streaming
+# Anime AI
 
-A lightweight VRM avatar system built with Three.js and `@pixiv/three-vrm`, designed for AI-powered voice streaming applications.
+> Open-source framework for building AI-powered virtual characters with VRM avatars, voice synthesis, lip-sync, and animation systems.
 
-This module provides:
+Anime AI helps developers create interactive AI characters that can speak, animate, and interact in real time.
 
-* VRM avatar loading and rendering
-* Mixamo animation support
-* Smooth animation transitions
-* Real-time lip-sync
-* Google Gemini Text-to-Speech integration
-* Drag-and-drop model and animation loading
-* Spring bone physics support
-* Interactive camera controls
+Perfect for:
+
+* AI Agents
+* Virtual Assistants
+* VTubers
+* Educational Characters
+* AI Streamers
+* Interactive NPCs
 
 ---
 
 ## Features
 
-### 🎭 VRM Avatar System
+### VRM Avatar Support
 
 * Load and render VRM 1.0 avatars
-* VRM optimization utilities
-* Expression management
-* Spring bone simulation
+* Runtime character switching
+* Expression control system
+* Spring bone physics
 
-### 🎬 Animation System
+### Animation System
 
-* Mixamo FBX animation support
+* Mixamo FBX support
 * Automatic Mixamo → VRM retargeting
-* Smooth crossfade transitions
+* Animation blending and crossfades
 * Animation sequence playback
 
-### 🗣️ Text-to-Speech & Lip Sync
+### AI Voice Integration
 
-* Google Gemini TTS integration
+* Google Gemini Text-to-Speech support
 * Multiple voice options
-* Real-time mouth movement synchronization
-* Audio-driven expression updates
+* Adjustable speed and pitch
+* Real-time audio playback
 
-### 🖱️ User-Friendly Controls
+### Lip Sync
 
-* Drag-and-drop VRM loading
-* Drag-and-drop FBX animation loading
-* Orbit camera controls
-* Runtime animation testing
+* Automatic mouth movement generation
+* Audio-driven facial expressions
+* Real-time synchronization with speech
+
+### Developer Friendly
+
+* Three.js based
+* Modern ES Modules
+* Drag-and-drop testing workflow
+* Easy integration into AI applications
+
+---
+
+## Demo
+
+### Default Character
+
+* VRM Avatar Loading
+* Idle Animation
+* Voice Playback
+* Lip Sync
+
+### Supported Assets
+
+| Type      | Format                   |
+| --------- | ------------------------ |
+| Character | .vrm                     |
+| Animation | .fbx                     |
+| Audio     | Generated via Gemini TTS |
 
 ---
 
@@ -51,20 +76,18 @@ This module provides:
 
 ```text
 anime-ai/
+├── characters/
+│   └── VRM1_Alicia_Solid.vrm
+│
 ├── humanoid-animations/
 │   ├── main.js
 │   ├── tts.js
 │   ├── loadMixamoAnimation.js
 │   ├── mixamoVRMRigMap.js
 │   ├── test.html
-│   ├── Breathing Idle.fbx
-│   └── Writing.fbx
-│
-├── characters/
-│   └── VRM1_Alicia_Solid.vrm
+│   └── animations/
 │
 ├── package.json
-├── tsconfig.json
 └── README.md
 ```
 
@@ -72,13 +95,13 @@ anime-ai/
 
 ## Quick Start
 
-### Install Dependencies
+### Install
 
 ```bash
 npm install
 ```
 
-### Run Demo
+### Run
 
 Open:
 
@@ -86,28 +109,19 @@ Open:
 humanoid-animations/test.html
 ```
 
-The application will:
+The application will automatically:
 
-1. Load the default VRM character
-2. Start the idle animation
-3. Enable lip-sync functionality
-4. Allow drag-and-drop animation testing
-
----
-
-## Supported Formats
-
-| Type      | Format        |
-| --------- | ------------- |
-| Avatar    | .vrm          |
-| Animation | .fbx (Mixamo) |
+1. Load the default VRM avatar
+2. Start idle animation
+3. Enable lip-sync
+4. Initialize voice controls
 
 ---
 
-## Text-to-Speech Example
+## Example
 
 ```javascript
-import { GeminiTTS, VoiceCharacter } from './humanoid-animations/tts.js';
+import { GeminiTTS, VoiceCharacter } from './tts.js';
 
 const tts = new GeminiTTS(API_KEY);
 
@@ -118,39 +132,83 @@ const character = new VoiceCharacter(
 );
 
 await character.speak(
-  "Hello! How can I help you today?",
+  "Hello! Welcome to Anime AI.",
   {
     voice: "Puck",
-    speakingRate: 1.0,
+    speakingRate: 1.0
   }
 );
 ```
 
 ---
 
-## Performance Optimizations
+## Use Cases
 
-The module automatically applies:
+### AI Agent Avatar
 
-* Vertex optimization
-* Skeleton merging
-* Morph target merging
-* Frustum culling adjustments
+Give AI agents a visual identity with voice and animation.
 
-using VRM utility functions from `@pixiv/three-vrm`.
+### VTuber Applications
+
+Create AI-driven VTuber experiences with minimal setup.
+
+### Educational Assistants
+
+Build interactive learning companions that can explain concepts using speech and gestures.
+
+### Customer Support Characters
+
+Deploy virtual representatives with natural voice interaction.
 
 ---
 
-## Browser Support
+## Roadmap
 
-* Chrome 80+
-* Firefox 75+
-* Safari 13+
-* Any browser supporting WebGL and ES Modules
+### Current
+
+* VRM Loading
+* Mixamo Animation Support
+* Gemini TTS
+* Lip Sync
+* Animation Blending
+
+### Planned
+
+* OpenAI Realtime API Integration
+* Live Microphone Lip Sync
+* Emotion System
+* Multi-Character Scene Support
+* Agent Framework Integration
+* Streaming Mode
+* Browser Voice Chat
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+Areas where help is appreciated:
+
+* VRM support improvements
+* Animation systems
+* Lip-sync quality
+* Voice integrations
+* Documentation
+* Example projects
+
+Please open an issue before submitting major changes.
+
+---
+
+## Why This Project Exists
+
+Most AI agent frameworks focus on intelligence but lack visual presence.
+
+Anime AI aims to bridge that gap by providing an open-source foundation for AI-powered virtual characters that can see, speak, animate, and interact naturally.
 
 ---
 
 ## License
 
-Part of the Anime AI project.
-See the project license for details.
+MIT License
